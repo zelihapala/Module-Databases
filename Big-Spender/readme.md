@@ -138,3 +138,106 @@ INSERT YOUR QUERIES HERE
 - [ ] All queries are written in SQL
 - [ ] All queries are correct and I have tested them in the database
 - [ ] I have opened a pull request with my answers written directly into this README.md file
+
+HERE IS MY ANSWERS
+codeyourfuture@codeyourfuture-HP-EliteBook-840-G3:~/Desktop/CYF/Module-Databases$ cd Big-Spender/
+codeyourfuture@codeyourfuture-HP-EliteBook-840-G3:~/Desktop/CYF/Module-Databases/Big-Spender$ createdb big-spender
+psql -d big-spender -f big-spender.sql
+
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1...
+
+big-spender=> SELECT \*
+FROM spends
+WHERE description ILIKE '%pk%';
+
+big-spender=> SELECT \*
+FROM spends
+WHERE amount BETWEEN 30000 AND 31000;
+
+big-spender=> SELECT EXTRACT(MONTH FROM date) AS month, SUM(amount) AS total_amount
+FROM spends
+WHERE EXTRACT(MONTH FROM date) = 3
+GROUP BY EXTRACT(MONTH FROM date);
+month | total_amount
+-------+--------------
+3 | 57348904
+(1 row)
+
+big-spender=> SELECT \*
+FROM spends
+WHERE description ILIKE '%fee%';
+
+big-spender=> INSERT INTO spends (date, transaction_no, supplier_inv_no, supplier_id, expense_type_id, expense_area_id, description, amount)
+VALUES ('2021-08-19', '38104091', '3780119655', (SELECT id FROM suppliers WHERE name = 'Dell'), (SELECT id FROM expense_types WHERE name = 'Hardware'), (SELECT id FROM expense_areas WHERE name = 'IT'), 'Computer Hardware Dell', 32000);
+
+big-spender=> SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'spends';
+column_name | data_type  
+-----------------+-------------------
+amount | numeric
+expense_type_id | integer
+expense_area_id | integer
+supplier_id | integer
+date | date
+transaction_no | integer
+id | integer
+description | character varying
+supplier_inv_no | character varying
+(9 rows)
+
+big-spender=> \d expense_areas
+Table "public.expense_areas"
+Column | Type | Collation | Nullable | Default  
+--------------+-----------------------+-----------+----------+-------------------------------------------
+id | integer | | not null | nextval('expense_areas_id_seq'::regclass)
+expense_area | character varying(30) | | not null |
+Indexes:
+"expense_areas_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+TABLE "spends" CONSTRAINT "spends_expense_area_id_fkey" FOREIGN KEY (expense_area_id) REFERENCES expense_areas(id)
+
+big-spender=> SELECT _ FROM spends WHERE expense_area_id = (SELECT id FROM expense_areas WHERE expense_area ILIKE 'Better Hospital Food');
+ERROR: more than one row returned by a subquery used as an expression
+big-spender=> SELECT _ FROM spends WHERE expense_area_id IN (SELECT id FROM expense_areas WHERE expense_area ILIKE 'Better Hospital Food');
+
+big-spender=> SELECT DATE_TRUNC('month', date) AS month,
+SUM(amount) AS total_amount
+FROM spends
+GROUP BY DATE_TRUNC('month', date)
+ORDER BY DATE_TRUNC('month', date);
+month | total_amount
+------------------------+--------------
+2021-03-01 00:00:00+00 | 57348904
+2021-04-01 00:00:00+01 | 45790388
+(2 rows)
+
+big-spender=> SELECT DATE_TRUNC('month', date) AS month,
+SUM(amount) AS total_amount
+FROM spends
+GROUP BY DATE_TRUNC('month', date)
+ORDER BY DATE_TRUNC('month', date);
+month | total_amount
+------------------------+--------------
+2021-03-01 00:00:00+00 | 57348904
+2021-04-01 00:00:00+01 | 45790388
+(2 rows)
+
+big-spender=> SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'suppliers';
+column_name | data_type  
+-------------+-------------------
+id | integer
+supplier | character varying
+(2 rows)
+
+big-spender=> SELECT s.supplier,
+SUM(sp.amount) AS total_amount
+FROM spends sp
+JOIN suppliers s ON sp.supplier_id = s.id
+GROUP BY s.supplier
+ORDER BY total_amount DESC;
+big-spender=>
